@@ -29,32 +29,69 @@ class AppealSection(BaseModel):
     policy_citation: Optional[str] = None
 
 
+class CriterionDetail(BaseModel):
+    """One payer criterion with met/unmet status and supporting evidence."""
+    criterion: str
+    met: bool
+    evidence: str
+
+
 # ── PA Request / Response ────────────────────────────────────────────────────
 
 class PARequest(BaseModel):
     clinical_note: str
-    payer: str                          # payer ID e.g. "bcbs_il", "uhc"
-    procedure_type: Optional[str] = None        # "imaging" | "surgery" | "medication"
-    procedure_category: Optional[str] = None    # e.g. "imaging_ct", "surgery_orthopedic"
-    patient_info: Optional[PatientInfo] = None  # patient demographics (not logged)
+    payer: str                               # payer ID e.g. "bcbs_il", "uhc"
+    procedure_type: Optional[str] = None     # "imaging" | "surgery" | "medication"
+    procedure_category: Optional[str] = None # e.g. "imaging_ct", "surgery_orthopedic"
+    patient_info: Optional[PatientInfo] = None
 
 
 class PAResponse(BaseModel):
+    """
+    Response shape is intentionally a superset of the frontend's GeneratedForm type.
+    All GeneratedForm fields are present as top-level fields so the frontend can use
+    this response directly without parsing form_sections.
+
+    Frontend GeneratedForm ↔ PAResponse field mapping:
+      icd10_code            → icd10_code
+      icd10_description     → icd10_description
+      cpt_code              → cpt_code
+      cpt_description       → cpt_description
+      clinical_justification→ clinical_justification
+      medical_necessity     → medical_necessity
+      supporting_evidence   → supporting_evidence
+      policy_sections_cited → policy_sections_cited
+      criteria_met          → criteria_met
+      criteria_total        → criteria_total
+      criteria_details      → criteria_details
+      approval_likelihood   → approval_likelihood
+      approval_reasoning    → approval_reasoning
+      missing_information   → missing_information
+    """
     success: bool
     payer_name: str
     procedure: Optional[str] = None
-    form_sections: List[FormSection]
+    form_sections: List[FormSection]         # Rich display blocks (keep for existing UI)
     raw_justification: str
-    confidence: str                      # "high" | "medium" | "low"
+    confidence: str                          # "high" | "medium" | "low"
     processing_time_ms: Optional[int] = None
     demo_mode: bool = False
 
-    # Top-level fields for frontend display (no parsing of form_sections needed)
+    # ── GeneratedForm-compatible flat fields ──────────────────────────────────
     icd10_code: Optional[str] = None
+    icd10_description: Optional[str] = None
     cpt_code: Optional[str] = None
+    cpt_description: Optional[str] = None
+    clinical_justification: Optional[str] = None
+    medical_necessity: Optional[str] = None
+    supporting_evidence: Optional[str] = None
+    policy_sections_cited: List[str] = []
     criteria_met: Optional[int] = None
     criteria_total: Optional[int] = None
-    approval_likelihood: Optional[str] = None   # "high" | "medium" | "low"
+    criteria_details: List[CriterionDetail] = []
+    approval_likelihood: Optional[str] = None  # "high" | "medium" | "low"
+    approval_reasoning: Optional[str] = None
+    missing_information: List[str] = []
 
 
 # ── Appeal Request / Response ────────────────────────────────────────────────
@@ -92,9 +129,9 @@ class PayersResponse(BaseModel):
 # ── Note Extraction (OCR) ────────────────────────────────────────────────────
 
 class ExtractNoteRequest(BaseModel):
-    image_base64: str                    # base64-encoded image data
-    mime_type: str = "image/jpeg"        # "image/jpeg" | "image/png" | "image/webp"
-    procedure_type: str = "general"      # hint for extraction context
+    image_base64: str
+    mime_type: str = "image/jpeg"
+    procedure_type: str = "general"
 
 
 class ExtractedClinicalData(BaseModel):
@@ -111,7 +148,7 @@ class ExtractedClinicalData(BaseModel):
     ordering_provider: Optional[str] = None
     visit_date: Optional[str] = None
     raw_text: Optional[str] = None
-    extraction_confidence: str = "low"   # "high" | "medium" | "low"
+    extraction_confidence: str = "low"
 
 
 class ExtractNoteResponse(BaseModel):

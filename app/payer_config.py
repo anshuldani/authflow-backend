@@ -314,10 +314,25 @@ DEMO_RESPONSES = {
         "payer": "bcbs_il",
         "procedure": "CT Myelogram — Lumbar Spine (CPT 72265)",
         "icd10_code": "M54.42",
+        "icd10_description": "Lumbago with sciatica, left side",
         "cpt_code": "72265",
+        "cpt_description": "Myelography via lumbar injection including radiological supervision and interpretation",
         "criteria_met": 3,
         "criteria_total": 3,
         "approval_likelihood": "high",
+        "approval_reasoning": "All 3 criteria met: MRI contraindicated by documented cardiac pacemaker, neurological deficit present at L4-L5, and conservative treatment (NSAIDs + PT ×4 weeks) completed.",
+        "missing_information": [],
+        "criteria_details": [
+            {"criterion": "MRI contraindication documented", "met": True, "evidence": "Cardiac pacemaker implanted March 2019 — documented in chart"},
+            {"criterion": "Neurological deficit present", "met": True, "evidence": "Decreased sensation L4-L5 dermatome on examination"},
+            {"criterion": "Conservative treatment ≥4 weeks completed", "met": True, "evidence": "NSAIDs (naproxen 500mg BID) + physical therapy ×4 weeks with inadequate response"}
+        ],
+        "policy_sections_cited": [
+            "BCBS IL Policy 4.1 — CT Myelogram: MRI contraindication covered indication",
+            "BCBS IL Policy 4.1 — CT Myelogram: 'Contraindication to MRI clearly documented'",
+            "BCBS IL Documentation Requirements — Section 4.1.3",
+            "BCBS IL Policy 4.1 — Medical Necessity Statement Language"
+        ],
         "form_sections": [
             {
                 "label": "Patient Diagnosis",
@@ -345,6 +360,9 @@ DEMO_RESPONSES = {
                 "policy_citation": "BCBS IL Policy 4.1 — Medical Necessity Statement Language"
             }
         ],
+        "clinical_justification": "Patient is a 52-year-old female with a 6-week history of progressive lower back pain with left leg radiculopathy rated 8/10. Neurological examination demonstrates decreased sensation in the L4-L5 dermatome. Conservative treatment (NSAIDs + physical therapy ×4 weeks) has not provided adequate relief. MRI is contraindicated due to existing cardiac pacemaker (2019). Patient meets all three BCBS IL criteria for CT myelogram: (1) MRI contraindication documented, (2) neurological deficit present, (3) conservative treatment attempted for adequate duration.",
+        "medical_necessity": "The requested CT myelogram lumbar spine is medically necessary to evaluate nerve root compression in a patient with lumbar radiculopathy (M54.42) who has failed conservative management consisting of NSAIDs and physical therapy over 4 weeks. MRI is contraindicated due to cardiac pacemaker implanted 2019. This imaging will directly inform surgical candidacy and treatment planning.",
+        "supporting_evidence": "• Symptom duration: 6 weeks (exceeds 4-week minimum threshold)\n• Conservative treatment: NSAIDs + physical therapy ×4 weeks — inadequate response\n• Neurological findings: Decreased sensation L4-L5 dermatome on examination\n• MRI contraindication: Cardiac pacemaker (2019) — documented in chart\n• Pain severity: 8/10 impacting activities of daily living",
         "confidence": "high"
     },
 
@@ -353,10 +371,26 @@ DEMO_RESPONSES = {
         "payer": "aetna",
         "procedure": "Adalimumab (Humira) — Moderate-Severe Plaque Psoriasis",
         "icd10_code": "L40.0",
+        "icd10_description": "Psoriasis vulgaris (plaque psoriasis)",
         "cpt_code": "J0135",
+        "cpt_description": "Injection, adalimumab, 20mg",
         "criteria_met": 3,
         "criteria_total": 3,
         "approval_likelihood": "high",
+        "approval_reasoning": "All 3 Aetna CPB 0249 criteria met: severe plaque psoriasis (BSA 15% ≥10%), step therapy failure documented (methotrexate ×16 weeks), and prescriber is board-certified dermatologist.",
+        "missing_information": [],
+        "criteria_details": [
+            {"criterion": "Moderate-to-severe plaque psoriasis (BSA ≥10% or PASI ≥12)", "met": True, "evidence": "BSA 15% — exceeds severe threshold of ≥10% per Aetna CPB 0249"},
+            {"criterion": "Step therapy: methotrexate ≥3 months at therapeutic dose", "met": True, "evidence": "Methotrexate 15mg/week ×16 weeks — inadequate response documented"},
+            {"criterion": "Prescribed by or in consultation with dermatologist", "met": True, "evidence": "Board-certified dermatologist prescriber documented"}
+        ],
+        "policy_sections_cited": [
+            "Aetna CPB 0249 — Severe: BSA ≥10%",
+            "Aetna CPB 0249 — Biologic Agents for Psoriasis",
+            "Aetna CPB 0249: 'Methotrexate ≥3 months at therapeutic dose'",
+            "Aetna CPB 0249 — Documentation Requirements",
+            "Aetna CPB 0249 — Medical Necessity Criteria"
+        ],
         "form_sections": [
             {
                 "label": "Patient Diagnosis",
@@ -384,6 +418,9 @@ DEMO_RESPONSES = {
                 "policy_citation": "Aetna CPB 0249 — Medical Necessity Criteria"
             }
         ],
+        "clinical_justification": "Patient has severe plaque psoriasis (BSA 15%, exceeding Aetna CPB 0249 severe threshold of ≥10%). Step therapy per CPB 0249 has been completed: methotrexate 15mg/week ×16 weeks with inadequate response (BSA remained >10%). Prescriber is board-certified dermatologist. All three Aetna CPB 0249 criteria are satisfied.",
+        "medical_necessity": "Per Aetna CPB 0249, patient has moderate-to-severe plaque psoriasis (BSA 15%, DLQI significantly impacted) with documented failure of step therapy including methotrexate at 15mg/week for 16 weeks. Adalimumab is requested following inadequate response to first-line systemic therapy. Prescriber is board-certified dermatologist.",
+        "supporting_evidence": "• BSA: 15% (severe per Aetna CPB 0249 threshold of ≥10%)\n• DLQI: Significantly impacted\n• Step therapy failure: Methotrexate 15mg/week ×16 weeks — inadequate response\n• Prescriber: Board-certified dermatologist\n• Baseline labs completed (TB test, CBC, LFTs)",
         "confidence": "high"
     },
 
@@ -392,10 +429,27 @@ DEMO_RESPONSES = {
         "payer": "uhc",
         "procedure": "Total Knee Arthroplasty — Right Knee (CPT 27447)",
         "icd10_code": "M17.11",
+        "icd10_description": "Primary osteoarthritis, right knee",
         "cpt_code": "27447",
+        "cpt_description": "Arthroplasty, knee, condyle and plateau; medial and lateral compartments with or without patella resurfacing (total knee arthroplasty)",
         "criteria_met": 4,
         "criteria_total": 4,
         "approval_likelihood": "high",
+        "approval_reasoning": "All 4 UHC ORTH.018 criteria met: KL Grade IV confirmed on X-ray, ≥6 months conservative care (8 months), significant functional impairment documented, and NSAIDs now contraindicated by CKD Stage 3 satisfying the exception criterion.",
+        "missing_information": [],
+        "criteria_details": [
+            {"criterion": "Radiographic OA Grade III or IV (Kellgren-Lawrence)", "met": True, "evidence": "KL Grade IV tricompartmental OA on standing AP X-ray"},
+            {"criterion": "Conservative treatment ≥6 months (PT, analgesics, injections)", "met": True, "evidence": "8 months: PT ×12 sessions, acetaminophen + NSAIDs + 2 corticosteroid injections"},
+            {"criterion": "Functional impairment documented (ADL limitation)", "met": True, "evidence": "Pain 9/10, unable to walk >1 block, unable to climb stairs"},
+            {"criterion": "NSAIDs trialed or contraindicated", "met": True, "evidence": "NSAIDs contraindicated due to CKD Stage 3 (GFR 42) — UHC exception criterion satisfied"}
+        ],
+        "policy_sections_cited": [
+            "UHC Policy ORTH.018 — Radiographic evidence required: KL Grade III or IV",
+            "UHC Policy ORTH.018 — Total Joint Replacement coverage criteria",
+            "UHC Policy ORTH.018 — Functional impairment criteria",
+            "UHC ORTH.018 Documentation Requirements",
+            "UHC Policy ORTH.018 — Medical Necessity Statement"
+        ],
         "form_sections": [
             {
                 "label": "Patient Diagnosis",
@@ -423,6 +477,9 @@ DEMO_RESPONSES = {
                 "policy_citation": "UHC Policy ORTH.018 — Medical Necessity Statement"
             }
         ],
+        "clinical_justification": "Patient is a 68-year-old male with Kellgren-Lawrence Grade IV right knee osteoarthritis. Conservative treatment over 8 months has included physical therapy (12 sessions), acetaminophen 1g TID, naproxen 500mg BID ×3 months, and two intra-articular corticosteroid injections with only temporary relief. NSAIDs are now contraindicated due to CKD Stage 3 (GFR 42). Functional assessment documents pain score 9/10, inability to walk >1 block, and significant ADL impairment. Patient meets all four UHC ORTH.018 criteria.",
+        "medical_necessity": "This patient has KL Grade IV osteoarthritis of the right knee confirmed by X-ray. Conservative treatment including PT ×12 sessions, analgesics, and two corticosteroid injections over 8 months has been exhausted. NSAIDs are now contraindicated due to CKD Stage 3 (GFR 42), satisfying the UHC exception criteria. Total knee arthroplasty is medically necessary per UHC Policy ORTH.018.",
+        "supporting_evidence": "• Imaging: KL Grade IV tricompartmental OA on standing X-ray\n• Conservative treatment duration: 8 months (exceeds 6-month requirement)\n• Physical therapy: 12 sessions with minimal improvement\n• Pharmacological management: Acetaminophen + NSAIDs + 2 intra-articular injections trialed\n• NSAID limitation: CKD Stage 3 (GFR 42) — NSAIDs now contraindicated\n• Functional impairment: Pain 9/10, walking <1 block, unable to climb stairs\n• Surgical clearance: Cardiology and anesthesia pre-op clearance obtained",
         "confidence": "high"
     },
 
@@ -431,10 +488,29 @@ DEMO_RESPONSES = {
         "payer": "cigna",
         "procedure": "MRI Lumbar Spine (CPT 72148)",
         "icd10_code": "M54.5",
+        "icd10_description": "Low back pain, unspecified",
         "cpt_code": "72148",
+        "cpt_description": "MRI, spinal canal and contents, lumbar; without contrast material",
         "criteria_met": 1,
         "criteria_total": 3,
         "approval_likelihood": "low",
+        "approval_reasoning": "Denial anticipated: symptom duration only 2 weeks (Cigna requires ≥4 weeks) and no conservative treatment documented before requesting imaging.",
+        "missing_information": [
+            "Symptom duration must reach 4 weeks before resubmission",
+            "Documentation of conservative treatment (NSAIDs + physical therapy ≥4 weeks)",
+            "Neurological examination findings if deficit develops"
+        ],
+        "criteria_details": [
+            {"criterion": "Diagnosis documented with ICD-10", "met": True, "evidence": "Low back pain M54.5 documented"},
+            {"criterion": "Symptom duration ≥4 weeks", "met": False, "evidence": "Only 2 weeks — Cigna requires minimum 4 weeks for non-urgent presentations"},
+            {"criterion": "Conservative treatment ≥4 weeks (PT + analgesics)", "met": False, "evidence": "No PT or analgesic trial documented prior to imaging request"}
+        ],
+        "policy_sections_cited": [
+            "Cigna Coverage Policy 0336 — Lumbar Spine MRI",
+            "Cigna Coverage Policy 0336 — Denial Criteria: duration <4 weeks, no conservative treatment",
+            "Cigna Coverage Policy 0336 — Documentation Requirements",
+            "Cigna Coverage Policy 0336 — Non-Coverage Statement"
+        ],
         "form_sections": [
             {
                 "label": "Patient Diagnosis",
@@ -462,6 +538,9 @@ DEMO_RESPONSES = {
                 "policy_citation": "Cigna Coverage Policy 0336 — Non-Coverage Statement"
             }
         ],
+        "clinical_justification": "CRITERIA GAP IDENTIFIED — This request does not meet Cigna Coverage Policy 0336 criteria at this time. Criteria met (1 of 3): diagnosis documented (M54.5). Criteria not met (2 of 3): symptom duration only 2 weeks (requires ≥4 weeks) and no conservative treatment documented. Recommendation: initiate NSAIDs + PT and resubmit after 4 weeks.",
+        "medical_necessity": "Per Cigna Coverage Policy 0336, MRI lumbar spine is not covered for acute low back pain of <4 weeks duration without neurological deficit and without a documented trial of conservative therapy. Resubmit after 4 weeks of NSAIDs and physical therapy if symptoms persist.",
+        "supporting_evidence": "• Symptom duration: 2 weeks (below 4-week threshold)\n• Conservative treatment: None documented prior to imaging request\n• Neurological exam: No deficit (SLR negative, reflexes intact)\n• Red flags: None identified\n• Pain score: 6/10",
         "confidence": "low"
     },
 
@@ -470,10 +549,27 @@ DEMO_RESPONSES = {
         "payer": "humana",
         "procedure": "Adalimumab (Humira) — Rheumatoid Arthritis (CPT J0135)",
         "icd10_code": "M05.79",
+        "icd10_description": "Rheumatoid arthritis with rheumatoid factor, multiple sites",
         "cpt_code": "J0135",
+        "cpt_description": "Injection, adalimumab, 20mg",
         "criteria_met": 4,
         "criteria_total": 4,
         "approval_likelihood": "high",
+        "approval_reasoning": "All 4 Humana HUM-0589 criteria met: moderate-to-severe seropositive RA confirmed (DAS28 5.2), failure of ≥2 conventional DMARDs documented, negative TB screening, and board-certified rheumatologist prescriber.",
+        "missing_information": [],
+        "criteria_details": [
+            {"criterion": "Moderate-to-severe active RA confirmed (DAS28 ≥3.2)", "met": True, "evidence": "DAS28 5.2, CRP 3.8 mg/dL, ESR 62 mm/hr — active moderate-to-severe disease"},
+            {"criterion": "Seropositive RA (RF or anti-CCP positive)", "met": True, "evidence": "RF positive and anti-CCP positive documented"},
+            {"criterion": "Failure of ≥2 conventional DMARDs at adequate dose/duration", "met": True, "evidence": "MTX 20mg/week ×6mo + HCQ 400mg ×4mo — both inadequate response"},
+            {"criterion": "TB screening negative before anti-TNF initiation", "met": True, "evidence": "QuantiFERON-TB Gold negative"}
+        ],
+        "policy_sections_cited": [
+            "Humana Policy HUM-0589 — Biologic DMARD Coverage Criteria",
+            "Humana Policy HUM-0589 — Anti-TNF biologics for RA",
+            "Humana Policy HUM-0589 — 'Failure of ≥2 conventional DMARDs'",
+            "Humana Policy HUM-0589 — Documentation Requirements",
+            "Humana Policy HUM-0589 — Medical Necessity Criteria"
+        ],
         "form_sections": [
             {
                 "label": "Patient Diagnosis",
@@ -501,6 +597,9 @@ DEMO_RESPONSES = {
                 "policy_citation": "Humana Policy HUM-0589 — Medical Necessity Criteria"
             }
         ],
+        "clinical_justification": "Patient has moderate-to-severe seropositive RA (DAS28 5.2, CRP 3.8 mg/dL, RF+/anti-CCP+) refractory to conventional DMARD therapy. Step therapy per HUM-0589 completed: methotrexate 20mg/week ×6 months and hydroxychloroquine 400mg ×4 months — both with inadequate response. TB screening negative. Prescriber is board-certified rheumatologist. All four Humana HUM-0589 criteria satisfied.",
+        "medical_necessity": "Per Humana Policy HUM-0589, adalimumab is medically necessary for this patient with moderate-to-severe seropositive RA (M05.79, DAS28 5.2) who has failed conventional DMARDs including methotrexate ×6 months and hydroxychloroquine ×4 months. TB screening is negative. Prescriber is board-certified rheumatologist.",
+        "supporting_evidence": "• DAS28 score: 5.2 (moderate-to-severe active disease)\n• CRP: 3.8 mg/dL (elevated)\n• ESR: 62 mm/hr (elevated)\n• RF positive, anti-CCP positive (seropositive RA confirmed)\n• Step therapy: MTX ×6mo + HCQ ×4mo — all with inadequate response\n• TB screening: QuantiFERON-TB Gold negative\n• Prescriber: Board-certified rheumatologist",
         "confidence": "high"
     },
 }

@@ -12,7 +12,7 @@ import time
 import logging
 from typing import Optional
 
-from app.models import PARequest, PAResponse, FormSection
+from app.models import PARequest, PAResponse, FormSection, CriterionDetail
 from app.payer_config import PAYERS, DEMO_RESPONSES
 
 logger = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ def get_llm():
 
 
 # ── Core prompt ───────────────────────────────────────────────────────────────
-PA_FORM_PROMPT = """You are an expert medical billing specialist with 15 years of experience completing prior authorization forms. Your job is to generate a complete, professional prior authorization form that will be APPROVED by the insurance payer.
+PA_FORM_PROMPT = """You are an expert medical billing specialist with 15 years of experience completing prior authorization forms. Generate a complete PA form that will be APPROVED by the insurance payer.
 
 PAYER: {payer_name}
 
@@ -71,22 +71,37 @@ CLINICAL NOTE FROM PHYSICIAN:
 
 PROCEDURE TYPE: {procedure_type}
 
-INSTRUCTIONS:
-Generate a complete prior authorization form with exactly these 5 sections. Use the payer's own terminology from the requirements above. Be specific and clinical. Map every criterion from the payer requirements to evidence in the clinical note.
-
 OUTPUT FORMAT — Return ONLY valid JSON, no markdown, no explanation:
 {{
   "procedure": "Full procedure name with CPT code",
-  "icd10_code": "Most specific ICD-10 code for this case (e.g. M54.42)",
+
+  "icd10_code": "Most specific ICD-10 code (e.g. M54.42)",
+  "icd10_description": "Full ICD-10 description (e.g. Lumbago with sciatica, left side)",
   "cpt_code": "Most appropriate CPT code (e.g. 72265)",
+  "cpt_description": "Full CPT description",
+
+  "clinical_justification": "2-3 sentences in payer language mapping patient findings to each criterion. Cite specific policy section.",
+  "medical_necessity": "1-2 sentence formal medical necessity statement using the PAYER'S EXACT language from their policy.",
+  "supporting_evidence": "Bullet-point list of: symptom duration, conservative treatments with dates/duration, exam findings, test results, functional limitations",
+
+  "policy_sections_cited": ["List of specific policy sections this request satisfies"],
+
   "criteria_met": 3,
   "criteria_total": 4,
+  "criteria_details": [
+    {{"criterion": "Description of the payer criterion", "met": true, "evidence": "Specific evidence from the note"}}
+  ],
   "approval_likelihood": "high",
+  "approval_reasoning": "One sentence explaining the likelihood assessment.",
+  "missing_information": ["Any information from the note that would strengthen the request, or empty array"],
+
+  "confidence": "high",
+
   "sections": [
     {{
       "label": "Patient Diagnosis",
-      "content": "ICD-10 code(s), diagnosis name, key presenting symptoms and duration",
-      "policy_citation": "Exact policy section this satisfies"
+      "content": "ICD-10 code, diagnosis name, key symptoms and duration",
+      "policy_citation": "Exact policy section"
     }},
     {{
       "label": "Requested Procedure/Service",
@@ -95,29 +110,28 @@ OUTPUT FORMAT — Return ONLY valid JSON, no markdown, no explanation:
     }},
     {{
       "label": "Clinical Justification",
-      "content": "Map patient's specific symptoms and findings to EACH payer criterion. Be explicit about how the patient meets every requirement.",
-      "policy_citation": "Policy section for medical necessity"
+      "content": "Map each payer criterion to specific patient evidence. Be explicit.",
+      "policy_citation": "Policy medical necessity section"
     }},
     {{
       "label": "Supporting Clinical Evidence",
-      "content": "Bullet points: symptom duration, conservative treatments tried with dates/duration, examination findings, relevant test results, functional limitations",
-      "policy_citation": "Policy documentation requirements section"
+      "content": "Bullet points: duration, treatments tried with dates, exam findings, test results, functional limitations",
+      "policy_citation": "Policy documentation requirements"
     }},
     {{
       "label": "Medical Necessity Statement",
-      "content": "3-4 sentence formal medical necessity statement using the PAYER'S EXACT LANGUAGE from their requirements.",
-      "policy_citation": "Policy medical necessity language section"
+      "content": "3-4 sentence formal statement using the PAYER'S EXACT LANGUAGE from their requirements.",
+      "policy_citation": "Policy medical necessity language"
     }}
-  ],
-  "confidence": "high"
+  ]
 }}
 
 RULES:
-- Use the payer's exact terminology
-- icd10_code and cpt_code must be 7th-character extended where appropriate
-- criteria_met and criteria_total reflect how many payer criteria are satisfied
+- Use the payer's exact terminology throughout
+- icd10_code: use most specific code with extension where appropriate
+- criteria_met / criteria_total: count of payer criteria satisfied vs total
 - approval_likelihood: "high" if all criteria met, "medium" if most met, "low" if key criteria missing
-- confidence same as approval_likelihood
+- confidence equals approval_likelihood
 - Do NOT output anything except the JSON object"""
 
 
@@ -172,6 +186,15 @@ def generate_pa_form(request: PARequest, payer_criteria: str) -> PAResponse:
                 for s in data.get("sections", [])
             ]
 
+            criteria_details = [
+                CriterionDetail(
+                    criterion=c["criterion"],
+                    met=c["met"],
+                    evidence=c["evidence"],
+                )
+                for c in data.get("criteria_details", [])
+            ]
+
             elapsed = int((time.time() - start_time) * 1000)
 
             return PAResponse(
@@ -183,12 +206,21 @@ def generate_pa_form(request: PARequest, payer_criteria: str) -> PAResponse:
                 confidence=data.get("confidence", "medium"),
                 processing_time_ms=elapsed,
                 demo_mode=False,
-                # Top-level fields
+                # GeneratedForm-compatible flat fields
                 icd10_code=data.get("icd10_code"),
+                icd10_description=data.get("icd10_description"),
                 cpt_code=data.get("cpt_code"),
+                cpt_description=data.get("cpt_description"),
+                clinical_justification=data.get("clinical_justification"),
+                medical_necessity=data.get("medical_necessity"),
+                supporting_evidence=data.get("supporting_evidence"),
+                policy_sections_cited=data.get("policy_sections_cited") or [],
                 criteria_met=data.get("criteria_met"),
                 criteria_total=data.get("criteria_total"),
+                criteria_details=criteria_details,
                 approval_likelihood=data.get("approval_likelihood"),
+                approval_reasoning=data.get("approval_reasoning"),
+                missing_information=data.get("missing_information") or [],
             )
 
         except json.JSONDecodeError as e:
@@ -294,6 +326,15 @@ def _get_demo_response(request: PARequest, payer_name: str, start_time: float) -
         for s in demo["form_sections"]
     ]
 
+    criteria_details = [
+        CriterionDetail(
+            criterion=c["criterion"],
+            met=c["met"],
+            evidence=c["evidence"],
+        )
+        for c in demo.get("criteria_details", [])
+    ]
+
     return PAResponse(
         success=True,
         payer_name=payer_name,
@@ -303,10 +344,19 @@ def _get_demo_response(request: PARequest, payer_name: str, start_time: float) -
         confidence=demo["confidence"],
         processing_time_ms=elapsed,
         demo_mode=True,
-        # Top-level fields from demo scenario
+        # GeneratedForm-compatible flat fields
         icd10_code=demo.get("icd10_code"),
+        icd10_description=demo.get("icd10_description"),
         cpt_code=demo.get("cpt_code"),
+        cpt_description=demo.get("cpt_description"),
+        clinical_justification=demo.get("clinical_justification"),
+        medical_necessity=demo.get("medical_necessity"),
+        supporting_evidence=demo.get("supporting_evidence"),
+        policy_sections_cited=demo.get("policy_sections_cited") or [],
         criteria_met=demo.get("criteria_met"),
         criteria_total=demo.get("criteria_total"),
+        criteria_details=criteria_details,
         approval_likelihood=demo.get("approval_likelihood"),
+        approval_reasoning=demo.get("approval_reasoning"),
+        missing_information=demo.get("missing_information") or [],
     )
