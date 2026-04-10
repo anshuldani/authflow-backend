@@ -295,5 +295,5 @@ def _get_synthetic_fallback(payer_id: str, procedure_type: str) -> str:
         return list(payer_policies.values())[0]
 
     # If payer not in synthetic policies, use Blue Cross as universal fallback
-    bcbs = SYNTHETIC_POLICIES.get("bluecross_il", {})
+    bcbs = SYNTHETIC_POLICIES.get("bcbs_il", {})
     return bcbs.get("imaging", "No policy criteria available. Generate based on standard medical necessity criteria.")

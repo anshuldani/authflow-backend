@@ -77,13 +77,22 @@ def get_procedure_type(filename: str) -> str:
 
 def get_payer_id(filename: str) -> str | None:
     fname_lower = filename.lower()
-    for payer_id in PAYERS.keys():
-        if payer_id.replace("_", "") in fname_lower.replace("_", "").replace("-", ""):
-            return payer_id
-        # Also try short versions
-        short = payer_id.split("_")[0]
-        if short in fname_lower:
-            return payer_id
+
+    # Explicit alias mapping for common filename patterns
+    aliases = {
+        "bcbs_il": ["bcbs_il", "bcbsil", "bcbs", "bluecross_il", "bluecross"],
+        "uhc": ["uhc", "unitedhealthcare", "united"],
+        "aetna": ["aetna"],
+        "cigna": ["cigna"],
+        "humana": ["humana"],
+    }
+
+    fname_clean = fname_lower.replace("_", "").replace("-", "")
+    for payer_id, patterns in aliases.items():
+        for pattern in patterns:
+            if pattern.replace("_", "") in fname_clean:
+                return payer_id
+
     return None
 
 

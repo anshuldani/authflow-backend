@@ -1,7 +1,7 @@
 """
-Form Generator — takes clinical note + payer PA criteria → complete PA form.
+Form Generator — clinical note + payer PA criteria → complete PA form.
 
-LLM: Gemini 1.5 Flash (primary, fast + cheap)
+LLM: Gemini 2.0 Flash (primary, fast + cheap)
 Fallback: GPT-4o-mini
 Demo mode: hardcoded responses from payer_config.py
 """
@@ -35,12 +35,12 @@ def get_llm():
                 temperature=0.1,
                 max_tokens=2048,
             )
-            logger.info("LLM initialized: Gemini 1.5 Flash")
+            logger.info("LLM initialized: Gemini 2.0 Flash")
             return llm
         except Exception as e:
             logger.warning(f"Gemini init failed: {e}")
 
-    if openai_key:
+    if openai_key and openai_key != "your_openai_api_key_here_optional_fallback":
         try:
             from langchain_openai import ChatOpenAI
             llm = ChatOpenAI(
@@ -76,11 +76,16 @@ Generate a complete prior authorization form with exactly these 5 sections. Use 
 
 OUTPUT FORMAT — Return ONLY valid JSON, no markdown, no explanation:
 {{
-  "procedure": "Full procedure name with CPT code if determinable",
+  "procedure": "Full procedure name with CPT code",
+  "icd10_code": "Most specific ICD-10 code for this case (e.g. M54.42)",
+  "cpt_code": "Most appropriate CPT code (e.g. 72265)",
+  "criteria_met": 3,
+  "criteria_total": 4,
+  "approval_likelihood": "high",
   "sections": [
     {{
       "label": "Patient Diagnosis",
-      "content": "ICD-10 code(s) if mentioned, diagnosis name, key presenting symptoms and duration",
+      "content": "ICD-10 code(s), diagnosis name, key presenting symptoms and duration",
       "policy_citation": "Exact policy section this satisfies"
     }},
     {{
@@ -100,29 +105,30 @@ OUTPUT FORMAT — Return ONLY valid JSON, no markdown, no explanation:
     }},
     {{
       "label": "Medical Necessity Statement",
-      "content": "3-4 sentence formal medical necessity statement using the PAYER'S EXACT LANGUAGE from their requirements. State why this is medically necessary, what conservative care failed, what the imaging/treatment will determine.",
+      "content": "3-4 sentence formal medical necessity statement using the PAYER'S EXACT LANGUAGE from their requirements.",
       "policy_citation": "Policy medical necessity language section"
     }}
   ],
   "confidence": "high"
 }}
 
-IMPORTANT:
-- Use the payer's exact terminology (copy their medical necessity language template)
-- If ICD-10 or CPT codes are not in the note, derive them from the clinical picture
-- Confidence should be "high" if the note clearly satisfies payer criteria, "medium" if some criteria are implied, "low" if critical information is missing
-- Do NOT add information not supported by the clinical note
+RULES:
+- Use the payer's exact terminology
+- icd10_code and cpt_code must be 7th-character extended where appropriate
+- criteria_met and criteria_total reflect how many payer criteria are satisfied
+- approval_likelihood: "high" if all criteria met, "medium" if most met, "low" if key criteria missing
+- confidence same as approval_likelihood
 - Do NOT output anything except the JSON object"""
 
 
 def generate_pa_form(request: PARequest, payer_criteria: str) -> PAResponse:
     """
     Core function: generate PA form from clinical note + payer criteria.
-    
+
     Flow:
     1. Check DEMO_MODE → return hardcoded response
     2. Try LLM (Gemini → GPT-4o-mini)
-    3. Fallback to structured extraction if LLM fails
+    3. Fallback to hardcoded demo response if LLM fails
     """
     start_time = time.time()
     payer_info = PAYERS.get(request.payer, {})
@@ -141,13 +147,13 @@ def generate_pa_form(request: PARequest, payer_criteria: str) -> PAResponse:
                 payer_name=payer_name,
                 payer_criteria=payer_criteria,
                 clinical_note=request.clinical_note,
-                procedure_type=request.procedure_type or "general",
+                procedure_type=request.procedure_type or request.procedure_category or "general",
             )
 
             response = llm.invoke(prompt)
             content = response.content if hasattr(response, "content") else str(response)
 
-            # Clean JSON from response
+            # Strip markdown fences if present
             content = content.strip()
             if content.startswith("```"):
                 content = content.split("```")[1]
@@ -177,6 +183,12 @@ def generate_pa_form(request: PARequest, payer_criteria: str) -> PAResponse:
                 confidence=data.get("confidence", "medium"),
                 processing_time_ms=elapsed,
                 demo_mode=False,
+                # Top-level fields
+                icd10_code=data.get("icd10_code"),
+                cpt_code=data.get("cpt_code"),
+                criteria_met=data.get("criteria_met"),
+                criteria_total=data.get("criteria_total"),
+                approval_likelihood=data.get("approval_likelihood"),
             )
 
         except json.JSONDecodeError as e:
@@ -218,7 +230,6 @@ Be specific and professional."""
         sections = []
         for i, para in enumerate(paragraphs[:4]):
             label = labels[i] if i < len(labels) else f"Section {i+1}"
-            # Remove numbering prefix if present
             content = para
             for prefix in ["1. ", "2. ", "3. ", "4. ", "DIAGNOSIS: ", "REQUESTED SERVICE: ",
                           "CLINICAL JUSTIFICATION: ", "MEDICAL NECESSITY: "]:
@@ -247,24 +258,26 @@ def _get_demo_response(request: PARequest, payer_name: str, start_time: float) -
     """Return hardcoded demo response. Picks best match by payer."""
     elapsed = int((time.time() - start_time) * 1000)
 
-    # Match to best demo scenario
-    demo = None
-    if request.payer in ("bluecross_il",):
-        demo = DEMO_RESPONSES.get("scenario_1")
-    elif request.payer == "aetna":
-        demo = DEMO_RESPONSES.get("scenario_2")
-    else:
-        demo = DEMO_RESPONSES.get("scenario_1")  # Default
+    # Map payer to best-fit demo scenario
+    payer_scenario_map = {
+        "bcbs_il": "scenario_1",
+        "aetna": "scenario_2",
+        "uhc": "scenario_3",
+        "cigna": "scenario_4",
+        "humana": "scenario_5",
+    }
+
+    scenario_key = payer_scenario_map.get(request.payer, "scenario_1")
+    demo = DEMO_RESPONSES.get(scenario_key)
 
     if not demo:
-        # Minimal fallback
         return PAResponse(
             success=True,
             payer_name=payer_name,
             procedure="Prior Authorization Form",
             form_sections=[FormSection(
                 label="Prior Authorization",
-                content="Demo mode: This is a sample prior authorization form. Connect an LLM API key for live generation.",
+                content="Demo mode: Connect an LLM API key for live generation.",
             )],
             raw_justification="Demo mode response",
             confidence="high",
@@ -290,4 +303,10 @@ def _get_demo_response(request: PARequest, payer_name: str, start_time: float) -
         confidence=demo["confidence"],
         processing_time_ms=elapsed,
         demo_mode=True,
+        # Top-level fields from demo scenario
+        icd10_code=demo.get("icd10_code"),
+        cpt_code=demo.get("cpt_code"),
+        criteria_met=demo.get("criteria_met"),
+        criteria_total=demo.get("criteria_total"),
+        approval_likelihood=demo.get("approval_likelihood"),
     )
