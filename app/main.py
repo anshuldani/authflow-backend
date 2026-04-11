@@ -154,3 +154,14 @@ async def root():
         "docs": "/docs",
         "health": "/health",
     }
+
+
+# ── Request ID middleware ─────────────────────────────────────────────────────
+import uuid
+
+@app.middleware("http")
+async def add_request_id(request: Request, call_next) -> Response:
+    request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+    return response
