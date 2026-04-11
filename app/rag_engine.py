@@ -297,3 +297,19 @@ def _get_synthetic_fallback(payer_id: str, procedure_type: str) -> str:
     # If payer not in synthetic policies, use Blue Cross as universal fallback
     bcbs = SYNTHETIC_POLICIES.get("bcbs_il", {})
     return bcbs.get("imaging", "No policy criteria available. Generate based on standard medical necessity criteria.")
+
+
+def retrieve_with_retry(payer_id: str, procedure: str, max_retries: int = 3) -> list:
+    """Retrieve RAG context with exponential backoff retry."""
+    import time as _time
+    for attempt in range(max_retries):
+        try:
+            return retrieve_policy_context(payer_id, procedure)
+        except Exception as e:
+            if attempt == max_retries - 1:
+                logger.error(f"RAG retrieval failed after {max_retries} attempts: {e}")
+                return []
+            wait = 2 ** attempt
+            logger.warning(f"RAG retrieval attempt {attempt + 1} failed, retrying in {wait}s: {e}")
+            _time.sleep(wait)
+    return []
