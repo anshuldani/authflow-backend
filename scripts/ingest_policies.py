@@ -80,17 +80,18 @@ def get_payer_id(filename: str) -> str | None:
 
     # Explicit alias mapping for common filename patterns
     aliases = {
-        "bcbs_il": ["bcbs_il", "bcbsil", "bcbs", "bluecross_il", "bluecross"],
+        "bcbs_il": ["bcbs_il", "bcbsil", "bcbs", "bluecross_il", "bluecross", "blueshield", "blue"],
         "uhc": ["uhc", "unitedhealthcare", "united"],
         "aetna": ["aetna"],
         "cigna": ["cigna"],
         "humana": ["humana"],
     }
 
-    fname_clean = fname_lower.replace("_", "").replace("-", "")
+    # Strip underscores, dashes, and spaces for fuzzy matching
+    fname_clean = fname_lower.replace("_", "").replace("-", "").replace(" ", "")
     for payer_id, patterns in aliases.items():
         for pattern in patterns:
-            if pattern.replace("_", "") in fname_clean:
+            if pattern.replace("_", "").replace(" ", "") in fname_clean:
                 return payer_id
 
     return None
