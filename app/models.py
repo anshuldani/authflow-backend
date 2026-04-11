@@ -39,11 +39,12 @@ class CriterionDetail(BaseModel):
 # ── PA Request / Response ────────────────────────────────────────────────────
 
 class PARequest(BaseModel):
-    clinical_note: str
+    clinical_note: str = ""
     payer: str                               # payer ID e.g. "bcbs_il", "uhc"
     procedure_type: Optional[str] = None     # "imaging" | "surgery" | "medication"
     procedure_category: Optional[str] = None # e.g. "imaging_ct", "surgery_orthopedic"
     patient_info: Optional[PatientInfo] = None
+    image_base64: Optional[str] = None       # base64-encoded image — optional
 
 
 class PAResponse(BaseModel):
@@ -124,6 +125,16 @@ class PayerInfo(BaseModel):
 
 class PayersResponse(BaseModel):
     payers: List[PayerInfo]
+
+
+# ── Simple OCR response (ocr_engine.py / brief-compatible shape) ────────────
+
+class NoteExtractionResponse(BaseModel):
+    success: bool
+    extracted_text: str
+    confidence: str          # "high" | "medium" | "low"
+    method: str              # "gemini_vision" | "tesseract" | "failed"
+    raw_text: Optional[str] = None
 
 
 # ── Note Extraction (OCR) ────────────────────────────────────────────────────

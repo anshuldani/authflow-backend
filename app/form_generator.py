@@ -14,6 +14,7 @@ from typing import Optional
 
 from app.models import PARequest, PAResponse, FormSection, CriterionDetail
 from app.payer_config import PAYERS, DEMO_RESPONSES
+from app.cpt_engine import lookup_cpt, format_cpt_candidates, is_cpt_loaded
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +71,8 @@ CLINICAL NOTE FROM PHYSICIAN:
 {clinical_note}
 
 PROCEDURE TYPE: {procedure_type}
+
+{cpt_candidates}
 
 OUTPUT FORMAT — Return ONLY valid JSON, no markdown, no explanation:
 {{
@@ -157,11 +160,21 @@ def generate_pa_form(request: PARequest, payer_criteria: str) -> PAResponse:
 
     if llm:
         try:
+            procedure_type = request.procedure_type or request.procedure_category or "general"
+
+            # CPT lookup — build a query from procedure type + key clinical terms
+            cpt_query = f"{procedure_type} {request.clinical_note[:300]}"
+            cpt_hits = lookup_cpt(cpt_query, top_k=5) if is_cpt_loaded() else []
+            cpt_candidates = format_cpt_candidates(cpt_hits)
+            if cpt_hits:
+                logger.info(f"CPT lookup returned {len(cpt_hits)} candidates (top: {cpt_hits[0]['code']})")
+
             prompt = PA_FORM_PROMPT.format(
                 payer_name=payer_name,
                 payer_criteria=payer_criteria,
                 clinical_note=request.clinical_note,
-                procedure_type=request.procedure_type or request.procedure_category or "general",
+                procedure_type=procedure_type,
+                cpt_candidates=cpt_candidates,
             )
 
             response = llm.invoke(prompt)

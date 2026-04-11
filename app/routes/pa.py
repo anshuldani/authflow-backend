@@ -1,3 +1,5 @@
+import base64
+
 from fastapi import APIRouter, HTTPException, Depends, Request
 from app.models import PARequest, PAResponse
 from app.rag_engine import retrieve_criteria
@@ -5,6 +7,7 @@ from app.form_generator import generate_pa_form
 from app.payer_config import PAYERS
 from app.auth import verify_token
 from app.rate_limit import limiter
+from app.ocr_engine import extract_text_from_image
 import logging
 
 router = APIRouter()
@@ -22,6 +25,8 @@ async def generate_prior_auth(
     Core endpoint: generate a complete prior authorization form.
 
     Input:  clinical note + payer ID + optional procedure type + optional patient info
+            Optionally accepts image_base64 — OCR runs first, extracted text is combined
+            with any typed clinical_note before form generation.
     Output: structured PA form with sections, policy citations, and top-level clinical fields
     """
     if body.payer not in PAYERS:
@@ -30,11 +35,35 @@ async def generate_prior_auth(
             detail=f"Unknown payer '{body.payer}'. Valid payers: {list(PAYERS.keys())}",
         )
 
-    if not body.clinical_note or len(body.clinical_note.strip()) < 20:
+    clinical_note = body.clinical_note or ""
+
+    # ── OCR: extract text from image if provided ──────────────────────────────
+    if body.image_base64:
+        try:
+            image_bytes = base64.b64decode(body.image_base64)
+            ocr_result = extract_text_from_image(image_bytes)
+            extracted = ocr_result.get("text", "")
+            if extracted:
+                clinical_note = (extracted + "\n" + clinical_note).strip() if clinical_note else extracted
+                logger.info(
+                    "PA request: OCR extracted %d chars via %s (confidence=%s)",
+                    len(extracted),
+                    ocr_result.get("method"),
+                    ocr_result.get("confidence"),
+                )
+            else:
+                logger.warning("PA request: OCR returned empty text — using typed note only")
+        except Exception as e:
+            logger.warning(f"PA request: OCR failed, using typed note only: {e}")
+
+    if not clinical_note or len(clinical_note.strip()) < 20:
         raise HTTPException(
             status_code=400,
-            detail="Clinical note is too short. Please provide a complete clinical note.",
+            detail="Clinical note is too short. Please provide a complete clinical note (or a readable image).",
         )
+
+    # Mutate body so form_generator receives the final note
+    body = body.model_copy(update={"clinical_note": clinical_note})
 
     # Resolve procedure type from category if not explicitly set
     procedure_type = body.procedure_type or _category_to_type(body.procedure_category) or "general"

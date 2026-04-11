@@ -23,6 +23,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.routes import pa, appeal, payers, extract_note
 from app.rag_engine import ingest_synthetic_policies, is_rag_loaded
+from app.cpt_engine import is_cpt_loaded
 from app.rate_limit import limiter
 
 # ── Logging ──────────────────────────────────────────────────────────────────
@@ -51,6 +52,14 @@ async def lifespan(app: FastAPI):
             logger.warning(f"RAG init failed (will use fallback): {e}")
     else:
         logger.info("Demo mode: skipping RAG init, using hardcoded responses")
+
+    cpt_ready = is_cpt_loaded()
+    if cpt_ready:
+        logger.info("CPT code database ready (semantic lookup enabled)")
+    else:
+        logger.warning(
+            "CPT code database not loaded — run: python scripts/ingest_cpt_codes.py"
+        )
 
     logger.info("AuthFlow Backend ready")
     logger.info("=" * 50)
@@ -123,6 +132,7 @@ async def health_check():
         "status": "ok",
         "version": "1.0.0",
         "rag_loaded": is_rag_loaded(),
+        "cpt_loaded": is_cpt_loaded(),
         "demo_mode": DEMO_MODE,
     }
 
