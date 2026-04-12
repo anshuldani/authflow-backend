@@ -13,6 +13,8 @@ import os
 import time
 import logging
 import json
+import asyncio
+import threading
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -37,31 +39,36 @@ DEMO_MODE = os.getenv("DEMO_MODE", "0") == "1"
 
 
 # ── Startup / shutdown ────────────────────────────────────────────────────────
+def _background_init():
+    """Run heavy startup work in a background thread so the server accepts requests immediately."""
+    if not DEMO_MODE:
+        logger.info("Background: initializing RAG engine...")
+        try:
+            ingest_synthetic_policies()
+            logger.info(f"Background: RAG ready. Loaded: {is_rag_loaded()}")
+        except Exception as e:
+            logger.warning(f"Background: RAG init failed (will use fallback): {e}")
+    else:
+        logger.info("Demo mode: skipping RAG init, using hardcoded responses")
+
+    cpt_ready = is_cpt_loaded()
+    if cpt_ready:
+        logger.info("Background: CPT code database ready")
+    else:
+        logger.warning("Background: CPT database not loaded — run: python scripts/ingest_cpt_codes.py")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("=" * 50)
     logger.info("AuthFlow Backend starting up")
     logger.info(f"Demo mode: {DEMO_MODE}")
 
-    if not DEMO_MODE:
-        logger.info("Initializing RAG engine...")
-        try:
-            ingest_synthetic_policies()
-            logger.info(f"RAG ready. Loaded: {is_rag_loaded()}")
-        except Exception as e:
-            logger.warning(f"RAG init failed (will use fallback): {e}")
-    else:
-        logger.info("Demo mode: skipping RAG init, using hardcoded responses")
+    # Start heavy init in background so healthcheck passes immediately
+    thread = threading.Thread(target=_background_init, daemon=True)
+    thread.start()
 
-    cpt_ready = is_cpt_loaded()
-    if cpt_ready:
-        logger.info("CPT code database ready (semantic lookup enabled)")
-    else:
-        logger.warning(
-            "CPT code database not loaded — run: python scripts/ingest_cpt_codes.py"
-        )
-
-    logger.info("AuthFlow Backend ready")
+    logger.info("AuthFlow Backend ready (init running in background)")
     logger.info("=" * 50)
     yield
     logger.info("AuthFlow Backend shutting down")
