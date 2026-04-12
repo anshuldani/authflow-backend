@@ -42,20 +42,22 @@ DEMO_MODE = os.getenv("DEMO_MODE", "0") == "1"
 def _background_init():
     """Run heavy startup work in a background thread so the server accepts requests immediately."""
     if not DEMO_MODE:
-        logger.info("Background: initializing RAG engine...")
-        try:
-            ingest_synthetic_policies()
-            logger.info(f"Background: RAG ready. Loaded: {is_rag_loaded()}")
-        except Exception as e:
-            logger.warning(f"Background: RAG init failed (will use fallback): {e}")
+        if is_rag_loaded():
+            logger.info("Background: RAG already populated — skipping ingestion")
+        else:
+            logger.info("Background: initializing RAG engine...")
+            try:
+                ingest_synthetic_policies()
+                logger.info(f"Background: RAG ready. Loaded: {is_rag_loaded()}")
+            except Exception as e:
+                logger.warning(f"Background: RAG init failed (will use fallback): {e}")
     else:
         logger.info("Demo mode: skipping RAG init, using hardcoded responses")
 
-    cpt_ready = is_cpt_loaded()
-    if cpt_ready:
+    if is_cpt_loaded():
         logger.info("Background: CPT code database ready")
     else:
-        logger.warning("Background: CPT database not loaded — run: python scripts/ingest_cpt_codes.py")
+        logger.warning("Background: CPT database not loaded")
 
 
 @asynccontextmanager

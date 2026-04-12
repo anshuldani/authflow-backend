@@ -19,8 +19,13 @@ RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTr
 # Copy application code
 COPY . .
 
-# Create data directory for ChromaDB
+# Create data directories
 RUN mkdir -p data/chroma_db data/payer_policies
+
+# Pre-populate ChromaDB with payer policies + CPT codes at build time
+# so the container starts instantly with no ingestion work at runtime
+RUN python scripts/ingest_cpt_codes.py && \
+    python -c "from app.rag_engine import ingest_synthetic_policies; ingest_synthetic_policies()"
 
 # Expose port (Railway + Cloud Run use $PORT env var)
 EXPOSE 8001
