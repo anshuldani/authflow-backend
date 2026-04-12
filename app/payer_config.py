@@ -603,3 +603,19 @@ DEMO_RESPONSES = {
         "confidence": "high"
     },
 }
+
+
+# ── Payer config cache ────────────────────────────────────────────────────────
+_payer_cache: dict = {}
+
+def get_payer_config(payer_id: str) -> dict | None:
+    """Return payer config from in-memory cache; populate on first call."""
+    global _payer_cache
+    if not _payer_cache:
+        _payer_cache = {p["id"]: p for p in PAYERS}
+    return _payer_cache.get(payer_id)
+
+def invalidate_payer_cache() -> None:
+    """Clear payer cache (call after config reload)."""
+    global _payer_cache
+    _payer_cache = {}
