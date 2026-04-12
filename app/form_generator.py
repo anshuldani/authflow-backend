@@ -210,6 +210,11 @@ def generate_pa_form(request: PARequest, payer_criteria: str) -> PAResponse:
 
             elapsed = int((time.time() - start_time) * 1000)
 
+            # Gemini sometimes returns supporting_evidence as a list — normalise to str
+            raw_evidence = data.get("supporting_evidence")
+            if isinstance(raw_evidence, list):
+                raw_evidence = "\n".join(str(x) for x in raw_evidence)
+
             return PAResponse(
                 success=True,
                 payer_name=payer_name,
@@ -226,7 +231,7 @@ def generate_pa_form(request: PARequest, payer_criteria: str) -> PAResponse:
                 cpt_description=data.get("cpt_description"),
                 clinical_justification=data.get("clinical_justification"),
                 medical_necessity=data.get("medical_necessity"),
-                supporting_evidence=data.get("supporting_evidence"),
+                supporting_evidence=raw_evidence,
                 policy_sections_cited=data.get("policy_sections_cited") or [],
                 criteria_met=data.get("criteria_met"),
                 criteria_total=data.get("criteria_total"),
