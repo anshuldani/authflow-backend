@@ -22,4 +22,4 @@ RUN mkdir -p data/chroma_db data/payer_policies
 EXPOSE 8001
 
 # Start server
-CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8001}
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8001}"]
