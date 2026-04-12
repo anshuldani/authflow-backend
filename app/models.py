@@ -174,3 +174,21 @@ class HealthResponse(BaseModel):
     version: str
     rag_loaded: bool
     demo_mode: bool
+
+
+# ── Validator helpers ────────────────────────────────────────────────────────
+from pydantic import field_validator
+import re
+
+CPT_PATTERN = re.compile(r'^\d{5}$')
+ICD10_PATTERN = re.compile(r'^[A-Z]\d{2}(\.\d+)?$')
+
+def validate_cpt_code(v: str) -> str:
+    if v and not CPT_PATTERN.match(v.strip()):
+        raise ValueError(f"Invalid CPT code format: {v}")
+    return v.strip()
+
+def validate_icd10_code(v: str) -> str:
+    if v and not ICD10_PATTERN.match(v.strip().upper()):
+        raise ValueError(f"Invalid ICD-10 code format: {v}")
+    return v.strip().upper()
