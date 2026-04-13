@@ -126,3 +126,11 @@ def extract_text_from_image(image_bytes: bytes) -> dict:
         "confidence": "low",
         "method": "failed",
     }
+
+
+# ── OCR result confidence filter ─────────────────────────────────────────────
+MIN_CONFIDENCE = 0.75
+
+def filter_low_confidence_blocks(blocks: list, threshold: float = MIN_CONFIDENCE) -> list:
+    """Remove OCR text blocks below confidence threshold to reduce hallucinations."""
+    return [b for b in blocks if b.get("confidence", 1.0) >= threshold]
