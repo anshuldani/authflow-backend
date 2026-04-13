@@ -61,3 +61,10 @@ async def generate_appeal_letter(
     )
 
     return result
+
+
+# ── Input sanitization ───────────────────────────────────────────────────────
+def _sanitize_appeal_input(text: str) -> str:
+    """Strip leading/trailing whitespace and collapse internal whitespace runs."""
+    import re
+    return re.sub(r'\s+', ' ', text.strip())
