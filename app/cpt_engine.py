@@ -103,3 +103,16 @@ def format_cpt_candidates(hits: list[dict]) -> str:
         lines.append(f"  {i}. {h['code']} — {h['description']} (score: {h['score']})")
     lines.append("Select the most clinically appropriate code from the list above.")
     return "\n".join(lines)
+
+
+# ── CPT code search ──────────────────────────────────────────────────────────
+def search_cpt_by_description(keyword: str, limit: int = 10) -> list[dict]:
+    """Full-text search across CPT descriptions. Case-insensitive substring match."""
+    kw = keyword.lower().strip()
+    results = []
+    for code, desc in _get_cpt_db().items():
+        if kw in desc.lower():
+            results.append({"code": code, "description": desc})
+            if len(results) >= limit:
+                break
+    return results
