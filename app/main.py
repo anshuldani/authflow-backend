@@ -165,3 +165,21 @@ async def add_request_id(request: Request, call_next) -> Response:
     response = await call_next(request)
     response.headers["X-Request-ID"] = request_id
     return response
+
+
+@app.get("/health/v2", tags=["System"])
+async def health_check_v2():
+    """Extended health check with component status breakdown."""
+    from app.cpt_engine import is_cpt_loaded
+    from app.rag_engine import is_rag_loaded
+    import psutil
+    return {
+        "status": "ok",
+        "version": "1.1.0",
+        "components": {
+            "rag": "ready" if is_rag_loaded() else "loading",
+            "cpt": "ready" if is_cpt_loaded() else "unavailable",
+            "api": "ready",
+        },
+        "demo_mode": DEMO_MODE,
+    }
