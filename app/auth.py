@@ -61,3 +61,14 @@ async def verify_token(
         # Covers JWTError, ImportError (jose not installed), etc.
         logger.warning(f"JWT verification failed: {type(exc).__name__}: {exc}")
         raise HTTPException(status_code=401, detail="Invalid or expired token.")
+
+
+# ── Token expiry check ───────────────────────────────────────────────────────
+import time as _time
+
+def is_token_expired(token_payload: dict, clock_skew_secs: int = 30) -> bool:
+    """Return True if JWT exp claim indicates the token has expired."""
+    exp = token_payload.get("exp")
+    if exp is None:
+        return True
+    return _time.time() > (exp + clock_skew_secs)
